@@ -1,3 +1,5 @@
+#include "frame.h"
+#include "init.h"
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
@@ -60,6 +62,9 @@ void kmain(void) {
 
     // Fetch the first framebuffer.
     struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
+
+    register_function(frame_init);
+    init_kernel();
 
     // Print a nice pattern to screen as an example.
     // Note: we assume the framebuffer model is RGB with 32-bit pixels.
