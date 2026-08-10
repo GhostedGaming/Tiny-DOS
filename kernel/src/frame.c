@@ -1,3 +1,4 @@
+#include "frame.h"
 #include "hhdm.h"
 #include <stdint.h>
 #include <stddef.h>
@@ -51,6 +52,6 @@ int frame_init() {
             }
         }
     }
-    
+
     return 0;
 }

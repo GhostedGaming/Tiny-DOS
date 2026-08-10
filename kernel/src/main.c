@@ -1,9 +1,16 @@
+#include "gdt.h"
 #include "frame.h"
+#include "hhdm.h"
+#include "idt.h"
 #include "init.h"
+#include "pic.h"
+#include "pit.h"
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
 #include <limine.h>
+
+uint64_t hhdm_offset;
 
 // Set the base revision to 6, this is recommended as this is the latest
 // base revision described by the Limine boot protocol specification.
@@ -20,6 +27,12 @@ static volatile uint64_t limine_base_revision[] = LIMINE_BASE_REVISION(6);
 __attribute__((used, section(".limine_requests")))
 static volatile struct limine_framebuffer_request framebuffer_request = {
     .id = LIMINE_FRAMEBUFFER_REQUEST_ID,
+    .revision = 0
+};
+
+__attribute__((used, section(".limine_requests")))
+static volatile struct limine_hhdm_request hhdm_request = {
+    .id = LIMINE_HHDM_REQUEST_ID,
     .revision = 0
 };
 
@@ -62,9 +75,16 @@ void kmain(void) {
 
     // Fetch the first framebuffer.
     struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
-
+    hhdm_offset = hhdm_request.response->offset;
     register_function(frame_init);
+    register_function(gdt_init);
+    register_function(idt_init);
+    register_function(pic_init);
+    register_function(pit_init);
+    
     init_kernel();
+
+    pic_clear_mask(0);
 
     // Print a nice pattern to screen as an example.
     // Note: we assume the framebuffer model is RGB with 32-bit pixels.
@@ -76,7 +96,7 @@ void kmain(void) {
             fb_ptr[y * (framebuffer->pitch / 4) + x] = (nY << 8) | nX;
         }
     }
-
+    asm volatile ("sti");
     // We're done, just hang...
     hcf();
 }
