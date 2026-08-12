@@ -2,6 +2,12 @@
 #include "portio.h"
 #include <stdint.h>
 
+static uint16_t pic_get_irq_reg(uint8_t ocw3) {
+    outb(PIC1_COMMAND, ocw3);
+    outb(PIC2_COMMAND, ocw3);
+    return (inb(PIC2_COMMAND) << 8) | inb(PIC1_COMMAND);
+}
+
 void pic_disable() {
     outb(PIC1_DATA, 0xFF);
     outb(PIC2_DATA, 0xFF);
@@ -33,7 +39,6 @@ void pic_init() {
 
     outb(PIC1_DATA, mask1);
     outb(PIC2_DATA, mask2);
-    pic_disable();
 }
 
 void pic_send_eoi(uint8_t irq) {
@@ -71,12 +76,6 @@ void pic_clear_mask(uint8_t irq) {
 
     value = inb(port) & ~(1 << irq);
     outb(port, value);
-}
-
-static uint16_t pic_get_irq_reg(uint8_t ocw3) {
-    outb(PIC1_COMMAND, ocw3);
-    outb(PIC2_COMMAND, ocw3);
-    return (inb(PIC2_COMMAND) << 8) | inb(PIC1_COMMAND);
 }
 
 uint16_t pic_get_irr() {
